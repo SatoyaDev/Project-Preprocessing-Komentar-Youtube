@@ -1,0 +1,6 @@
+streamlit
+pandas
+youtube-comment-downloader
+PySastrawi
+matplotlib
+wordcloud
