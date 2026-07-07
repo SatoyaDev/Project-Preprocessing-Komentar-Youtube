@@ -18,11 +18,14 @@ st.markdown("---")
 @st.cache_resource
 def load_nlp_engines():
     stopword_remover = StopWordRemoverFactory().create_stop_word_remover()
+    # Stopwords Tambahan
+    with open('data/tambahan_stopwords.txt', 'r') as f:
+        custom_stopwords = set(line.strip().lower() for line in f if line.strip())
     stemmer = StemmerFactory().create_stemmer()
     downloader = YoutubeCommentDownloader()
-    return stopword_remover, stemmer, downloader
+    return stopword_remover, custom_stopwords , stemmer, downloader
 
-stopword_remover, stemmer, downloader = load_nlp_engines()
+stopword_remover, custom_stopwords, stemmer, downloader = load_nlp_engines()
 
 @st.cache_data
 def load_kamus():
@@ -42,10 +45,19 @@ def proses_teks_lengkap(teks):
     
     words = teks.split()
     words_baku = [kamus_slang[kata] if kata in kamus_slang else kata for kata in words]
-    teks_normal = " ".join(words_baku)
     
-    teks_stopword = stopword_remover.remove(teks_normal)
+    # 1. Hapus Custom Stopwords terlebih dahulu
+    words_tanpa_custom = [w for w in words_baku if w not in custom_stopwords]
+    
+    # 2. Gabungkan menjadi teks untuk diproses Sastrawi
+    teks_gabungan = " ".join(words_tanpa_custom)
+    
+    # 3. Hapus Stopword bawaan Sastrawi
+    teks_stopword = stopword_remover.remove(teks_gabungan)
+    
+    # 4. Stemming
     teks_final = stemmer.stem(teks_stopword)
+    
     return teks_final
 
 # 4. ANTARMUKA PENGGUNA (UI) UTAMA
@@ -121,7 +133,8 @@ if st.button("🚀 Mulai Analisis (Scraping ➔ Preprocessing ➔ Visualisasi)",
             
             # --- TAHAP D: DOWNLOAD ---
             st.markdown("---")
-            csv = df.to_csv(index=False).encode('utf-8')
+            # Memilih hanya kolom 'teks_bersih' sebelum diekspor
+            csv = df[['teks_bersih']].to_csv(index=False).encode('utf-8-sig')
             st.download_button(
                 label="📥 Download Clean Dataset (.csv)",
                 data=csv,
