@@ -1,6 +1,6 @@
 streamlit
 pandas
 youtube-comment-downloader
-PySastrawi
+PySastrawi==1.2.0
 matplotlib
 wordcloud
